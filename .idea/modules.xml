@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/example/example.iml" filepath="$PROJECT_DIR$/example/example.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ge-ormlite/ge-ormlite.iml" filepath="$PROJECT_DIR$/ge-ormlite/ge-ormlite.iml" />
+      <module fileurl="file://$PROJECT_DIR$/googlyeyessqlite.iml" filepath="$PROJECT_DIR$/googlyeyessqlite.iml" />
+    </modules>
+  </component>
+</project>
