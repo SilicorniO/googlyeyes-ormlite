@@ -2,6 +2,7 @@ package com.silicornio.googlyeyessqlite.model;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+import com.silicornio.geormlite.GeDatabaseFieldJson;
 
 @DatabaseTable
 public class Item {
@@ -23,6 +24,12 @@ public class Item {
 
     @DatabaseField
     public double numberDouble;
+
+    @DatabaseField
+    @GeDatabaseFieldJson
+    public String jsonData;
+
+    public ItemSub itemSub;
 
     @Override
     public boolean equals(Object o) {

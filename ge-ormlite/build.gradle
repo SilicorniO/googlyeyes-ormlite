@@ -31,4 +31,5 @@ dependencies {
     compile 'com.j256.ormlite:ormlite-android:4.45'
 
     testCompile 'junit:junit:4.12'
+    compile 'com.google.code.gson:gson:2.8.0'
 }

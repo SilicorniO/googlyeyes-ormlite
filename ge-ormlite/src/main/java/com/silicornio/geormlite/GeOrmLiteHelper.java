@@ -26,7 +26,6 @@ public class GeOrmLiteHelper extends OrmLiteSqliteOpenHelper {
         } catch (Exception e) {
             GEL.e("Exception creating database: " + e.toString());
         }
-
     }
 
     @Override

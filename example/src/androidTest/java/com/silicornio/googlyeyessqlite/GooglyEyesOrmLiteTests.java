@@ -7,6 +7,7 @@ import android.test.RenamingDelegatingContext;
 
 import com.silicornio.geormlite.general.GEL;
 import com.silicornio.googlyeyessqlite.model.Item;
+import com.silicornio.googlyeyessqlite.model.ItemSub;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -41,6 +42,11 @@ public class GooglyEyesOrmLiteTests {
         item.numberInt = 1;
         item.numberFloat = 2.2f;
         item.numberDouble = 3.3d;
+
+        ItemSub itemSub = new ItemSub();
+        itemSub.subText = "subtext";
+        item.itemSub = itemSub;
+
         return item;
     }
 

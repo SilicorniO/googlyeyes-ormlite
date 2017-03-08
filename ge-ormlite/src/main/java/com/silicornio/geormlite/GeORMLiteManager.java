@@ -14,6 +14,7 @@ import com.j256.ormlite.stmt.Where;
 import com.j256.ormlite.support.ConnectionSource;
 import com.silicornio.geormlite.general.GEL;
 import com.silicornio.geormlite.utils.GEDateUtils;
+import com.silicornio.geormlite.utils.GEJsonUtils;
 import com.silicornio.geormlite.utils.GEReflectionUtils;
 
 import java.lang.reflect.Field;
@@ -45,6 +46,7 @@ public abstract class GeORMLiteManager {
     //daos
     private RuntimeExceptionDao[] mDaos;
     private Field[] mDaosId;
+    private Field[] mDaosJson;
 
     private GeORMLiteManager(){
 
@@ -78,11 +80,12 @@ public abstract class GeORMLiteManager {
         //initialize arrays
         mDaos = new RuntimeExceptionDao[classes.length];
         mDaosId = new Field[classes.length];
+        mDaosJson = new Field[classes.length];
 
-        mDaos = new RuntimeExceptionDao[classes.length];
         for(int i = 0; i< classes.length; i++){
             mDaos[i] = mDatabaseHelper.getRuntimeExceptionDao(classes[i]);
             mDaosId[i] = GEReflectionUtils.getFieldId(classes[i]);
+            mDaosJson[i] = GEReflectionUtils.getFieldJson(classes[i]);
         }
     }
 
@@ -139,6 +142,26 @@ public abstract class GeORMLiteManager {
     }
 
     /**
+     * Get DAO JSON of a class
+     * @param obj Obj to check
+     * @return Field
+     * @throws Exception if it is not found
+     */
+    private Field getDaoJson(Object obj) throws IllegalArgumentException{
+        return getDaoJson(obj.getClass());
+    }
+
+    /**
+     * Get DAO JSON of a class
+     * @param c Class to check
+     * @return Field
+     * @throws Exception if it is not found
+     */
+    private Field getDaoJson(Class c) throws IllegalArgumentException{
+        return mDaosJson[getIndexClass(c)];
+    }
+
+    /**
      * Get the value of an object with the name of the field
      * @param obj Object
      * @param fieldName String name of the field
@@ -172,6 +195,67 @@ public abstract class GeORMLiteManager {
         return null;
     }
 
+    /**
+     * Update the JSON data of an object
+     * @param o Object where to update the json data
+     */
+    public void updateJsonData(Object o){
+        GEJsonUtils.updateJsonData(o, getDaoJson(o));
+    }
+
+    /**
+     * Check if the object contains a field with json data to read from it
+     * @param t Object to check
+     * @return T Object from JSON or the same object if there is not a JSON field
+     */
+    private <T>T checkJsonData(T t){
+
+        //check object is not null
+        if(t==null){
+            return null;
+        }
+
+        //check there is a Json data field
+        Field field = getDaoJson(t.getClass());
+        if(field==null){
+            return t;
+        }
+
+        //convert object from json
+        return GEJsonUtils.getObjectFromJsonData(t, field);
+    }
+
+    /**
+     * Check if the objects contains a field with json data to read from it
+     * @param list List<?> of objects
+     * @return List<?> List of objects from JSON or the same object if there is not a JSON field
+     */
+    private <T> List<T> checkJsonData(List<T> list){
+
+        //check list is not null
+        if(list==null){
+            return null;
+        }
+
+        //check list is not empty
+        if(list.size()==0){
+            return list;
+        }
+
+        //check there is a Json data field
+        Field field = getDaoJson(list.get(0).getClass());
+        if(field==null){
+            return list;
+        }
+
+        //convert object from json
+        List<T> listT = new ArrayList<>();
+        for(T t : list){
+            listT.add(GEJsonUtils.getObjectFromJsonData(t, field));
+        }
+        return listT;
+    }
+
     //------ HELPER METHODS -----
 
     /**
@@ -191,6 +275,7 @@ public abstract class GeORMLiteManager {
      */
     public void add(Object object){
         try {
+            updateJsonData(object);
             getDao(object).create(object);
         }catch(Exception e){
             GEL.e("Exception adding object: " + e.toString());
@@ -223,7 +308,7 @@ public abstract class GeORMLiteManager {
                     queryBuilder.limit(limit);
                 }
             }
-            return queryBuilder.query();
+            return checkJsonData(queryBuilder.query());
         }catch(Exception e){
             GEL.e("Exception getting all objects: " + e.toString());
         }
@@ -257,7 +342,7 @@ public abstract class GeORMLiteManager {
      */
     public <T> T getObjectById(Class klass, String id){
         try {
-            return (T)getDao(klass).queryForId(id);
+            return checkJsonData((T)getDao(klass).queryForId(id));
         }catch(Exception e){
             GEL.e("Exception getting object by id: " + e.toString());
         }
@@ -272,7 +357,7 @@ public abstract class GeORMLiteManager {
      */
     public <T> T getObjectById(T t){
         try {
-            return (T)getDao(t).queryForId(getId(t));
+            return checkJsonData((T)getDao(t).queryForId(getId(t)));
         }catch(Exception e){
             GEL.e("Exception getting object by id: " + e.toString());
         }
@@ -333,7 +418,7 @@ public abstract class GeORMLiteManager {
      */
     public <T> List<T> getObjectsByFields(T t, String fields, String orderBy, boolean ascending){
         try{
-            return getWhereByFields(t, fields, orderBy, ascending).query();
+            return checkJsonData(getWhereByFields(t, fields, orderBy, ascending).query());
         }catch(Exception e){
             GEL.e("Exception getting objects by fields: " + e.toString());
         }
@@ -351,7 +436,7 @@ public abstract class GeORMLiteManager {
      */
     public <T> List<T> getObjectsByFields(Class<T> klass, String fields, String orderBy, boolean ascending){
         try{
-            return getWhereByFields(klass, fields, orderBy, ascending).query();
+            return checkJsonData(getWhereByFields(klass, fields, orderBy, ascending).query());
         }catch(Exception e){
             GEL.e("Exception getting objects by fields: " + e.toString());
         }
@@ -535,7 +620,7 @@ public abstract class GeORMLiteManager {
                 }
             }
 
-            return where.query();
+            return checkJsonData(where.query());
 
         }catch(Exception e){
             GEL.e("Exception getting object by field with list: " + e.toString());
@@ -577,6 +662,7 @@ public abstract class GeORMLiteManager {
      */
     public boolean update(Object object){
         try {
+            updateJsonData(object);
             return getDao(object).update(object)>0;
         }catch(Exception e){
             GEL.e("Exception updating object: " + e.toString());

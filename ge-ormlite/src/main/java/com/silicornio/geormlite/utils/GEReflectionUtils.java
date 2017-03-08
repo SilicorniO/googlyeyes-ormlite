@@ -2,6 +2,7 @@ package com.silicornio.geormlite.utils;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+import com.silicornio.geormlite.GeDatabaseFieldJson;
 import com.silicornio.geormlite.general.GEL;
 
 import java.lang.annotation.Annotation;
@@ -30,6 +31,27 @@ public class GEReflectionUtils {
                             return field;
                         }
                     }
+                }
+            }
+        }catch(Exception e){
+            GEL.e("Exception getting field from object: " + e.toString());
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the field with the ID of an object
+     * @param klass Class
+     * @return Field field or NULL if error
+     */
+    public static Field getFieldJson(Class klass){
+
+        try {
+            for(Field field : klass.getDeclaredFields()){
+                if(field.isAnnotationPresent(GeDatabaseFieldJson.class)){
+                    field.setAccessible(true);
+                    return field;
                 }
             }
         }catch(Exception e){
