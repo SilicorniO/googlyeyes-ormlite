@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
  * Database manager
  * Contains methods to manage and work with the database
  */
-public abstract class GeORMLiteManager {
+public abstract class GeOrmLiteManager {
 
     public static final String DATETIME_FORMAT_ORMLITE = "yyyy-MM-dd HH:mm:ss.SSSSSS";
     public static final String DATE_FORMAT_ORMLITE = "yyyy-MM-dd";
@@ -41,18 +41,18 @@ public abstract class GeORMLiteManager {
     private OrmLiteSqliteOpenHelper mDatabaseHelper = null;
 
     /** Instance **/
-    private static GeORMLiteManager mInstance;
+    private static GeOrmLiteManager mInstance;
 
     //daos
     private RuntimeExceptionDao[] mDaos;
     private Field[] mDaosId;
     private Field[] mDaosJson;
 
-    private GeORMLiteManager(){
+    private GeOrmLiteManager(){
 
     }
 
-    public GeORMLiteManager(Context context){
+    public GeOrmLiteManager(Context context){
         classes = getClasses();
         databaseName = getDatabaseName();
         databaseVersion = getDatabaseVersion();

@@ -3,15 +3,13 @@ apply plugin: 'com.android.library'
 android {
     compileSdkVersion 24
     buildToolsVersion "25.0.0"
+    resourcePrefix "geormlite__"
 
     defaultConfig {
         minSdkVersion 15
         targetSdkVersion 24
-        versionCode 1
-        versionName "0.1.0"
-
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-
+        versionCode 2
+        versionName "0.2.0"
     }
     buildTypes {
         release {
@@ -23,13 +21,13 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
-        exclude group: 'com.android.support', module: 'support-annotations'
-    })
+    testCompile 'junit:junit:4.12'
 
     //database - orm-lite
     compile 'com.j256.ormlite:ormlite-android:4.45'
 
-    testCompile 'junit:junit:4.12'
+    //json - gson
     compile 'com.google.code.gson:gson:2.8.0'
 }
+
+apply from: rootProject.file('gradle/gradle-mvn-push.gradle')

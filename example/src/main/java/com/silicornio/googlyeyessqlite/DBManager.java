@@ -4,10 +4,10 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.j256.ormlite.support.ConnectionSource;
-import com.silicornio.geormlite.GeORMLiteManager;
+import com.silicornio.geormlite.GeOrmLiteManager;
 import com.silicornio.googlyeyessqlite.model.Item;
 
-public class DBManager extends GeORMLiteManager {
+public class DBManager extends GeOrmLiteManager {
 
     public static final String DATABASE_NAME = "GeOrmLiteExample";
     private static final int DATABASE_VERSION = 1;
