@@ -122,8 +122,6 @@ public class Item {
    ```
    
 3. Now you can execute actions directly:
-
-  We use the configuration file when we create an instance of the manager.
   
   ```java
 	  //add a instance of item object
