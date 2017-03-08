@@ -9,7 +9,7 @@ import com.silicornio.googlyeyessqlite.model.Item;
 
 public class DBManager extends GeORMLiteManager {
 
-    private static final String DATABASE_NAME = "GeOrmLiteExample";
+    public static final String DATABASE_NAME = "GeOrmLiteExample";
     private static final int DATABASE_VERSION = 1;
 
     /** Instance of DBManager **/

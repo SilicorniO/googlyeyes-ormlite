@@ -12,7 +12,6 @@ import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.StatementBuilder;
 import com.j256.ormlite.stmt.Where;
 import com.j256.ormlite.support.ConnectionSource;
-import com.j256.ormlite.table.TableUtils;
 import com.silicornio.geormlite.general.GEL;
 import com.silicornio.geormlite.utils.GEDateUtils;
 import com.silicornio.geormlite.utils.GEReflectionUtils;
@@ -33,9 +32,9 @@ public abstract class GeORMLiteManager {
     public static final String DATE_FORMAT_ORMLITE = "yyyy-MM-dd";
 
     //data to generate daos and open database
-    private Class[] mClasses;
-    private String mDatabaseName;
-    private int mDatabaseVersion;
+    protected static Class[] classes;
+    protected static String databaseName;
+    protected static int databaseVersion;
 
     //database helper
     private OrmLiteSqliteOpenHelper mDatabaseHelper = null;
@@ -52,9 +51,9 @@ public abstract class GeORMLiteManager {
     }
 
     public GeORMLiteManager(Context context){
-        mClasses = getClasses();
-        mDatabaseName = getDatabaseName();
-        mDatabaseVersion = getDatabaseVersion();
+        classes = getClasses();
+        databaseName = getDatabaseName();
+        databaseVersion = getDatabaseVersion();
         mDatabaseHelper = OpenHelperManager.getHelper(context, GeOrmLiteHelper.class);
         generateDaos();
     }
@@ -65,6 +64,10 @@ public abstract class GeORMLiteManager {
     public abstract int getDatabaseVersion();
     public abstract void onGeUpgrade(SQLiteDatabase database, ConnectionSource connectionSource, int oldVersion, int newVersion);
 
+    public static void onGeDbUpgrade(SQLiteDatabase database, ConnectionSource connectionSource, int oldVersion, int newVersion){
+        onGeDbUpgrade(database, connectionSource, oldVersion, newVersion);
+    }
+
     //------ CONSTRUCTION -----
 
     /**
@@ -73,12 +76,13 @@ public abstract class GeORMLiteManager {
     private void generateDaos(){
 
         //initialize arrays
-        mInstance.mDaos = new RuntimeExceptionDao[mClasses.length];
-        mInstance.mDaosId = new Field[mClasses.length];
+        mDaos = new RuntimeExceptionDao[classes.length];
+        mDaosId = new Field[classes.length];
 
-        for(int i = 0; i< mClasses.length; i++){
-            mInstance.mDaos[i] = mInstance.mDatabaseHelper.getRuntimeExceptionDao(mClasses[i]);
-            mInstance.mDaosId[i] = GEReflectionUtils.getFieldId(mClasses[i]);
+        mDaos = new RuntimeExceptionDao[classes.length];
+        for(int i = 0; i< classes.length; i++){
+            mDaos[i] = mDatabaseHelper.getRuntimeExceptionDao(classes[i]);
+            mDaosId[i] = GEReflectionUtils.getFieldId(classes[i]);
         }
     }
 
@@ -94,15 +98,14 @@ public abstract class GeORMLiteManager {
 
     //-------------- GENERAL -------------
 
-    private int getIndexClass(Object o) throws IllegalArgumentException{
-        Class oClass = o.getClass();
+    private int getIndexClass(Class oClass) throws IllegalArgumentException{
         for(int i=0; i<mDaos.length; i++){
-            if(mDaos[i].equals(oClass)){
+            if(classes[i].equals(oClass)){
                 return i;
             }
         }
 
-        throw new IllegalArgumentException("Dao NOT FOUND for class: " + o.getClass().toString());
+        throw new IllegalArgumentException("Dao NOT FOUND for class: " + oClass.toString());
     }
 
     /**
@@ -112,7 +115,17 @@ public abstract class GeORMLiteManager {
      * @throws Exception if it is not found
      */
     private RuntimeExceptionDao getDao(Object o) throws IllegalArgumentException{
-        return mDaos[getIndexClass(o)];
+        return getDao(o.getClass());
+    }
+
+    /**
+     * Get DAO of an object
+     * @param c Class to check
+     * @return RuntimeExceptionDao
+     * @throws Exception if it is not found
+     */
+    private RuntimeExceptionDao getDao(Class c) throws IllegalArgumentException{
+        return mDaos[getIndexClass(c)];
     }
 
     /**
@@ -122,7 +135,7 @@ public abstract class GeORMLiteManager {
      * @throws Exception if it is not found
      */
     private String getId(Object o) throws IllegalArgumentException{
-        return (String)getValue(mDaosId[getIndexClass(o)], o);
+        return (String)getValue(mDaosId[getIndexClass(o.getClass())], o);
     }
 
     /**
@@ -189,8 +202,8 @@ public abstract class GeORMLiteManager {
      * @param t Object to get All
      * @return List of objects
      */
-    public <T> List<T> getAll(T t){
-        return getAll(t, null, false);
+    public <T> List<T> getAll(Class<T> t){
+        return getAll(t, null, false, 0);
     }
 
     /**
@@ -198,13 +211,17 @@ public abstract class GeORMLiteManager {
      * @param t Object to get all
      * @param orderBy String name of the variable to order
      * @param ascending boolean TRUE ascend, FALSE not
+     * @param limit int maximum number of objects to return
      * @return List of objects
      */
-    public <T> List<T> getAll(T t, String orderBy, boolean ascending){
+    public <T> List<T> getAll(Class<T> t, String orderBy, boolean ascending, long limit){
         try {
             QueryBuilder<T, String> queryBuilder = getDao(t).queryBuilder();
             if(orderBy!=null) {
                 queryBuilder.orderBy(orderBy, ascending);
+                if(limit>0) {
+                    queryBuilder.limit(limit);
+                }
             }
             return queryBuilder.query();
         }catch(Exception e){
@@ -219,9 +236,9 @@ public abstract class GeORMLiteManager {
      * Get all objects
      * @param t Object to get all
      */
-    public <T> T getFirst(T t){
+    public <T> T getFirst(Class<T> t){
         try {
-            List<T> listT = getAll(t);
+            List<T> listT = getAll(t, null, false, 1);
             if(listT.size()>0){
                 return listT.get(0);
             }
@@ -230,6 +247,22 @@ public abstract class GeORMLiteManager {
         }
 
         //error getting all objects
+        return null;
+    }
+
+    /**
+     * Get all objects
+     * @param klass Class of the object
+     * @param id String identifier
+     */
+    public <T> T getObjectById(Class klass, String id){
+        try {
+            return (T)getDao(klass).queryForId(id);
+        }catch(Exception e){
+            GEL.e("Exception getting object by id: " + e.toString());
+        }
+
+        //error getting all object
         return null;
     }
 
@@ -282,6 +315,16 @@ public abstract class GeORMLiteManager {
 
     /**
      * Get a list of objects with a specific value in a field
+     * @param klass Class<T> class of object
+     * @param fields String list of fields separated by commas
+     * @return List of objects or null if ERROR
+     */
+    public <T> List<T> getObjectsByFields(Class<T> klass, String fields){
+        return getObjectsByFields(klass, fields, null, false);
+    }
+
+    /**
+     * Get a list of objects with a specific value in a field
      * @param t T instance of object
      * @param fields String list of fields separated by commas
      * @param orderBy String value to order or null if not necessary
@@ -300,6 +343,24 @@ public abstract class GeORMLiteManager {
 
     /**
      * Get a list of objects with a specific value in a field
+     * @param klass Class<T> class of object
+     * @param fields String list of fields separated by commas
+     * @param orderBy String value to order or null if not necessary
+     * @param ascending boolean TRUE for order ascending, FALSE descending
+     * @return List of objects or null if ERROR
+     */
+    public <T> List<T> getObjectsByFields(Class<T> klass, String fields, String orderBy, boolean ascending){
+        try{
+            return getWhereByFields(klass, fields, orderBy, ascending).query();
+        }catch(Exception e){
+            GEL.e("Exception getting objects by fields: " + e.toString());
+        }
+
+        return null;
+    }
+
+    /**
+     * Get a list of objects with a specific value in a field
      * @param t T instance of object
      * @param fields String list of fields separated by commas
      * @param orderBy String value to order or null if not necessary
@@ -309,6 +370,23 @@ public abstract class GeORMLiteManager {
     public <T> Where getWhereByFields(T t, String fields, String orderBy, boolean ascending){
         QueryBuilder<T, String> queryBuilder = getDao(t).queryBuilder();
         Where where = whereByFields(queryBuilder, t, fields);
+        if(orderBy!=null) {
+            queryBuilder.orderBy(orderBy, ascending);
+        }
+        return where;
+    }
+
+    /**
+     * Get a list of objects with a specific value in a field
+     * @param klass Class<T> class of object
+     * @param fields String list of fields separated by commas
+     * @param orderBy String value to order or null if not necessary
+     * @param ascending boolean TRUE for order ascending, FALSE descending
+     * @return List of objects or null if ERROR
+     */
+    public <T> Where getWhereByFields(Class<T> klass, String fields, String orderBy, boolean ascending){
+        QueryBuilder<T, String> queryBuilder = getDao(klass).queryBuilder();
+        Where where = whereByFields(queryBuilder, null, fields);
         if(orderBy!=null) {
             queryBuilder.orderBy(orderBy, ascending);
         }
@@ -341,7 +419,12 @@ public abstract class GeORMLiteManager {
                     oValue = aField[1];
                     field = aField[0];
                 }else {
-                    oValue = getFieldValue(t, field);
+                    if(t!=null) {
+                        oValue = getFieldValue(t, field);
+                    }else{
+                        oValue = null;
+                        GEL.e("Trying to get the value of the field '" + field + "' but not sending the object or the value with '='");
+                    }
                 }
 
                 where = applyWhere(where, operation, field, oValue, i==0);
@@ -400,6 +483,23 @@ public abstract class GeORMLiteManager {
     public <T> int getNumObjectsByFields(T t, String fields){
         try{
             return (int)getWhereByFields(t, fields, null, false).countOf();
+        }catch(Exception e){
+            GEL.e("Exception getting objects by fields: " + e.toString());
+        }
+
+        //error getting all object
+        return 0;
+    }
+
+    /**
+     * Get a list of objects with a specific value in a field
+     * @param klass Class<T> to get dao
+     * @param fields String name of the fields
+     * @return List of objects or null if ERROR
+     */
+    public <T> int getNumObjectsByFields(Class<T> klass, String fields){
+        try{
+            return (int)getWhereByFields(klass, fields, null, false).countOf();
         }catch(Exception e){
             GEL.e("Exception getting objects by fields: " + e.toString());
         }
@@ -540,13 +640,31 @@ public abstract class GeORMLiteManager {
     }
 
     /**
+     * Remove a list of objects with a specific value in a field
+     * @param klass Class<T> to get dao
+     * @param fields String list of fields separated by commas
+     */
+    public <T> int deleteObjectsByFields(Class<T> klass, String fields){
+        try{
+            DeleteBuilder<T, String> deleteBuilder = getDao(klass).deleteBuilder();
+            whereByFields(deleteBuilder, null, fields);
+            return deleteBuilder.delete();
+        }catch(Exception e){
+            GEL.e("Exception deleting objects by fields: " + e.toString());
+        }
+
+        //nothing deleted
+        return 0;
+    }
+
+    /**
      * Clean all table
-     * @param object Object type to delete
+     * @param c Class type to delete
      * @return int number of objects deleted
      */
-    public int deleteAll(Object object){
+    public int deleteAll(Class c){
         try {
-            return getDao(object).deleteBuilder().delete();
+            return getDao(c).deleteBuilder().delete();
         }catch(Exception e){
             GEL.e("Exception deleting all objects: " + e.toString());
         }
@@ -570,31 +688,6 @@ public abstract class GeORMLiteManager {
 
     //----- HELPER -----
 
-    public class GeOrmLiteHelper extends OrmLiteSqliteOpenHelper{
 
-        private GeOrmLiteHelper(Context context) {
-            super(context, mDatabaseName, null, mDatabaseVersion);
-        }
-
-        @Override
-        public void onCreate(SQLiteDatabase database, ConnectionSource connectionSource) {
-
-            try {
-
-                for(Class klass : mClasses){
-                    TableUtils.createTable(connectionSource, klass);
-                }
-
-            } catch (Exception e) {
-                GEL.e("Exception creating database: " + e.toString());
-            }
-
-        }
-
-        @Override
-        public void onUpgrade(SQLiteDatabase database, ConnectionSource connectionSource, int oldVersion, int newVersion) {
-            onGeUpgrade(database, connectionSource, oldVersion, newVersion);
-        }
-    }
 
 }
