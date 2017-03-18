@@ -5,17 +5,20 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.RenamingDelegatingContext;
 
+import com.j256.ormlite.stmt.Where;
+import com.silicornio.geormlite.GeOrmLiteManager;
 import com.silicornio.geormlite.general.GEL;
 import com.silicornio.googlyeyessqlite.model.Item;
 import com.silicornio.googlyeyessqlite.model.ItemSub;
+
+import junit.framework.Assert;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.sql.SQLException;
 import java.util.List;
-
-import static org.junit.Assert.assertTrue;
 
 @RunWith(AndroidJUnit4.class)
 public class GooglyEyesOrmLiteTests {
@@ -56,7 +59,7 @@ public class GooglyEyesOrmLiteTests {
     public void test001AddItem(){
         Item item = getItemFilled("1");
         mDbManager.add(item);
-        assertTrue(true);
+        Assert.assertTrue(true);
     }
 
     @Test
@@ -65,7 +68,7 @@ public class GooglyEyesOrmLiteTests {
         Item item = getItemFilled("1");
         mDbManager.add(item);
         Item itemDb = mDbManager.getFirst(Item.class);
-        assertTrue(item.equals(itemDb));
+        Assert.assertTrue(item.equals(itemDb));
     }
 
     @Test
@@ -74,7 +77,7 @@ public class GooglyEyesOrmLiteTests {
         Item item = getItemFilled("1");
         mDbManager.add(item);
         Item itemDb = mDbManager.getObjectById(Item.class, "1");
-        assertTrue(item.equals(itemDb));
+        Assert.assertTrue(item.equals(itemDb));
     }
 
     @Test
@@ -83,7 +86,7 @@ public class GooglyEyesOrmLiteTests {
         Item item = getItemFilled("1");
         mDbManager.add(item);
         Item itemDb = mDbManager.getObjectById(item);
-        assertTrue(item.equals(itemDb));
+        Assert.assertTrue(item.equals(itemDb));
     }
 
     @Test
@@ -94,7 +97,7 @@ public class GooglyEyesOrmLiteTests {
         mDbManager.add(item0);
         mDbManager.add(item1);
         List<Item> itemsDb = mDbManager.getAll(Item.class);
-        assertTrue(itemsDb.size()==2);
+        Assert.assertTrue(itemsDb.size()==2);
     }
 
     @Test
@@ -109,7 +112,7 @@ public class GooglyEyesOrmLiteTests {
         item.text = "testUpdate";
         mDbManager.update(item);
         Item itemDb = mDbManager.getObjectById(Item.class, "0");
-        assertTrue(item.equals(itemDb));
+        Assert.assertTrue(item.equals(itemDb));
     }
 
     @Test
@@ -119,7 +122,7 @@ public class GooglyEyesOrmLiteTests {
         mDbManager.add(item);
         mDbManager.delete(item);
         Item itemDb = mDbManager.getFirst(Item.class);
-        assertTrue(itemDb==null);
+        Assert.assertTrue(itemDb==null);
     }
 
     @Test
@@ -128,7 +131,7 @@ public class GooglyEyesOrmLiteTests {
         Item item = getItemFilled("1");
         mDbManager.add(item);
         List<Item> itemsDb = mDbManager.getObjectsByFields(Item.class, "text=text");
-        assertTrue(item.equals(itemsDb.get(0)));
+        Assert.assertTrue(item.equals(itemsDb.get(0)));
     }
 
     @Test
@@ -137,7 +140,7 @@ public class GooglyEyesOrmLiteTests {
         Item item = getItemFilled("1");
         mDbManager.add(item);
         List<Item> itemsDb = mDbManager.getObjectsByFields(item, "text");
-        assertTrue(item.equals(itemsDb.get(0)));
+        Assert.assertTrue(item.equals(itemsDb.get(0)));
     }
 
     @Test
@@ -146,7 +149,7 @@ public class GooglyEyesOrmLiteTests {
         Item item = getItemFilled("1");
         mDbManager.add(item);
         List<Item> itemsDb = mDbManager.getObjectsByFields(Item.class, "text=text,numberInt=1");
-        assertTrue(item.equals(itemsDb.get(0)));
+        Assert.assertTrue(item.equals(itemsDb.get(0)));
     }
 
     @Test
@@ -155,7 +158,7 @@ public class GooglyEyesOrmLiteTests {
         Item item = getItemFilled("1");
         mDbManager.add(item);
         List<Item> itemsDb = mDbManager.getObjectsByFields(item, "text,numberInt");
-        assertTrue(item.equals(itemsDb.get(0)));
+        Assert.assertTrue(item.equals(itemsDb.get(0)));
     }
 
     @Test
@@ -163,8 +166,8 @@ public class GooglyEyesOrmLiteTests {
         mDbManager.deleteAll(Item.class);
         Item item = getItemFilled("1");
         mDbManager.add(item);
-        int count = mDbManager.getNumObjectsByFields(Item.class, "numberDouble=3.3");
-        assertTrue(count == 1);
+        long count = mDbManager.getNumObjectsByFields(Item.class, "numberDouble=3.3");
+        Assert.assertTrue(count == 1);
     }
 
     @Test
@@ -172,8 +175,59 @@ public class GooglyEyesOrmLiteTests {
         mDbManager.deleteAll(Item.class);
         Item item = getItemFilled("1");
         mDbManager.add(item);
-        int count = mDbManager.getNumObjectsByFields(item, "numberDouble");
-        assertTrue(count == 1);
+        long count = mDbManager.getNumObjectsByFields(item, "numberDouble");
+        Assert.assertTrue(count == 1);
     }
+
+    @Test
+    public void test107GetNumItemsByClass(){
+        mDbManager.deleteAll(Item.class);
+        Item item = getItemFilled("1");
+        mDbManager.add(item);
+        long count = mDbManager.getNumObjects(Item.class);
+        Assert.assertTrue(count == 1);
+    }
+
+    @Test
+    public void test108GetFirstItemByFields(){
+        mDbManager.deleteAll(Item.class);
+        Item item1 = getItemFilled("1");
+        item1.text = "text1";
+        mDbManager.add(item1);
+        Item item2 = getItemFilled("2");
+        item2.text = "text2";
+        mDbManager.add(item2);
+        Item itemDb = mDbManager.getFirstObjectByFields(item2, "text");
+        Assert.assertTrue(item2.equals(itemDb));
+    }
+
+    @Test
+    public void test109GetFirstItemByFields(){
+        mDbManager.deleteAll(Item.class);
+        Item item1 = getItemFilled("1");
+        item1.text = "text1";
+        mDbManager.add(item1);
+        Item item2 = getItemFilled("2");
+        item2.text = "text2";
+        mDbManager.add(item2);
+        Item itemDb = mDbManager.getFirstObjectByFields(Item.class, "text=text2");
+        Assert.assertTrue(item2.equals(itemDb));
+    }
+
+    @Test
+    public void test201WhereEqualValue(){
+        mDbManager.deleteAll(Item.class);
+        Item item1 = getItemFilled("1");
+        item1.text = "";
+        mDbManager.add(item1);
+        List<Item> itemsDb = mDbManager.executeQuery(Item.class, new GeOrmLiteManager.GeQueryImplementation() {
+            @Override
+            public void applyWhere(Where where) throws SQLException {
+                where.eq("text", "");
+            }
+        });
+        Assert.assertTrue(itemsDb.get(0).equals(item1));
+    }
+
 
 }

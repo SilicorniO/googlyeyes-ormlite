@@ -9,6 +9,7 @@ Extension for ORMLite for Android
 ## Dependencies
  * ORMLite
  * Gson
+ * Java5-Annotations
 
 ##Installation
 
@@ -24,7 +25,13 @@ In your `build.gradle` you should declare the jCenter repository into `repositor
 ```
 Include the library as dependency:
 ```gradle
-compile 'com.silicornio:ge-ormlite:0.2.0'
+compile 'com.silicornio:ge-ormlite:0.3.0’
+
+//Include libraries not included in compilation, these are the versions used for last compilation of the library
+compile 'com.j256.ormlite:ormlite-android:5.0'
+compile 'com.google.code.gson:gson:2.8.0'
+compile 'org.jetbrains:annotations-java5:15.0'
+
 ```
 
 ### For Maven users
@@ -32,9 +39,11 @@ compile 'com.silicornio:ge-ormlite:0.2.0'
 <dependency>
   <groupId>com.silicornio</groupId>
   <artifactId>ge-ormlite</artifactId>
-  <version>0.2.0</version>
+  <version>0.3.0</version>
   <type>pom</type>
 </dependency>
+
+//Include libraries not included in compilation: ormlite, gson, and annotations-java5
 ```
 
 ##Usage
@@ -139,8 +148,24 @@ public class Item {
 	  //get items by a field
 	  List<Item> itemsDb = mDbManager.getObjectsByFields(Item.class, "text=text");
 	  
-	  //ge items by a field stores in the class
+	  //get items by a field stores in the class
 	  List<Item> itemsDb = mDbManager.getObjectsByFields(item, "text");
+
+	  //get items with a custom query. This is similar to execute a query in ORMLite but it checks
+	  //at the end if the object was stored in JSON
+	  List<Item> itemsDb = mDbManager.executeQuery(Item.class, new GeOrmLiteManager.GeQueryImplementation() {
+            @Override
+            public void applyWhere(Where where) throws SQLException {
+                where.eq("text", "");
+            }
+        });
+
+	   //custom query with traditional OrmLite: You need to get the Dao, you can use an object or a class
+	   //Call to checkJsonData at the end if the object is storing Json data, else it is not necessary 
+	   QueryBuilder<T, String> queryBuilder = getDao(klass).queryBuilder();
+           Where<T, String> where = queryBuilder.where();
+           //where.eq()…
+           return checkJsonData(where.query());
 	  
 	  //update the item
 	  mDbManager.update(item);
