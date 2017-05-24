@@ -25,7 +25,7 @@ In your `build.gradle` you should declare the jCenter repository into `repositor
 ```
 Include the library as dependency:
 ```gradle
-compile 'com.silicornio:ge-ormlite:0.3.0’
+compile 'com.silicornio:ge-ormlite:0.3.1’
 
 //Include libraries not included in compilation, these are the versions used for last compilation of the library
 compile 'com.j256.ormlite:ormlite-android:5.0'
@@ -39,7 +39,7 @@ compile 'org.jetbrains:annotations-java5:15.0'
 <dependency>
   <groupId>com.silicornio</groupId>
   <artifactId>ge-ormlite</artifactId>
-  <version>0.3.0</version>
+  <version>0.3.1</version>
   <type>pom</type>
 </dependency>
 

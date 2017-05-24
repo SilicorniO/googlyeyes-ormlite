@@ -4,7 +4,6 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.j256.ormlite.android.apptools.OpenHelperManager;
-import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
 import com.j256.ormlite.dao.GenericRawResults;
 import com.j256.ormlite.dao.RuntimeExceptionDao;
 import com.j256.ormlite.stmt.DeleteBuilder;
@@ -40,10 +39,7 @@ public abstract class GeOrmLiteManager {
     protected static int databaseVersion;
 
     //database helper
-    private OrmLiteSqliteOpenHelper mDatabaseHelper = null;
-
-    /** Instance **/
-    private static GeOrmLiteManager mInstance;
+    private GeOrmLiteHelper mDatabaseHelper = null;
 
     //daos
     private RuntimeExceptionDao[] mDaos;
@@ -59,6 +55,7 @@ public abstract class GeOrmLiteManager {
         databaseName = getDatabaseName();
         databaseVersion = getDatabaseVersion();
         mDatabaseHelper = OpenHelperManager.getHelper(context, GeOrmLiteHelper.class);
+        mDatabaseHelper.setManager(this);
         generateDaos();
     }
 
@@ -68,8 +65,8 @@ public abstract class GeOrmLiteManager {
     public abstract int getDatabaseVersion();
     public abstract void onGeUpgrade(SQLiteDatabase database, ConnectionSource connectionSource, int oldVersion, int newVersion);
 
-    public static void onGeDbUpgrade(SQLiteDatabase database, ConnectionSource connectionSource, int oldVersion, int newVersion){
-        onGeDbUpgrade(database, connectionSource, oldVersion, newVersion);
+    public void onGeDbUpgrade(SQLiteDatabase database, ConnectionSource connectionSource, int oldVersion, int newVersion){
+        onGeUpgrade(database, connectionSource, oldVersion, newVersion);
     }
 
     //------ CONSTRUCTION -----
@@ -95,8 +92,7 @@ public abstract class GeOrmLiteManager {
      * Destroy instance
      */
     public void destroy(){
-
-        mInstance = null;
+        mDatabaseHelper.setManager(null);
     }
 
     //----- INTERNAL CORE ------

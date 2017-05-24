@@ -10,13 +10,19 @@ import com.silicornio.geormlite.general.GEL;
 
 public class GeOrmLiteHelper extends OrmLiteSqliteOpenHelper {
 
+    /** Reference to manager **/
+    private GeOrmLiteManager mManager;
+
     public GeOrmLiteHelper(Context context) {
         super(context, GeOrmLiteManager.databaseName, null, GeOrmLiteManager.databaseVersion);
     }
 
+    public void setManager(GeOrmLiteManager mManager) {
+        this.mManager = mManager;
+    }
+
     @Override
     public void onCreate(SQLiteDatabase database, ConnectionSource connectionSource) {
-
         try {
 
             for(Class klass : GeOrmLiteManager.classes){
@@ -30,6 +36,8 @@ public class GeOrmLiteHelper extends OrmLiteSqliteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase database, ConnectionSource connectionSource, int oldVersion, int newVersion) {
-        GeOrmLiteManager.onGeDbUpgrade(database, connectionSource, oldVersion, newVersion);
+        mManager.onGeDbUpgrade(database, connectionSource, oldVersion, newVersion);
     }
+
+
 }

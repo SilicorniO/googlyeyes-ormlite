@@ -3,6 +3,9 @@ package com.silicornio.googlyeyessqlite;
 import android.app.Activity;
 import android.os.Bundle;
 
+import com.silicornio.geormlite.general.GEL;
+import com.silicornio.googlyeyessqlite.model.Item;
+
 public class MainActivity extends Activity {
 
     @Override
@@ -13,6 +16,10 @@ public class MainActivity extends Activity {
     }
 
     private void init() {
+
+        GEL.showLogs = true;
+        DBManager dbManager = DBManager.getInstance(this);
+        dbManager.getFirst(Item.class);
 
     }
 

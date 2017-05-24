@@ -5,12 +5,14 @@ import android.database.sqlite.SQLiteDatabase;
 
 import com.j256.ormlite.support.ConnectionSource;
 import com.silicornio.geormlite.GeOrmLiteManager;
+import com.silicornio.geormlite.general.GEL;
 import com.silicornio.googlyeyessqlite.model.Item;
+import com.silicornio.googlyeyessqlite.model.ItemSub;
 
 public class DBManager extends GeOrmLiteManager {
 
     public static final String DATABASE_NAME = "GeOrmLiteExample";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     /** Instance of DBManager **/
     private static DBManager mInstance;
@@ -29,7 +31,7 @@ public class DBManager extends GeOrmLiteManager {
     @Override
     public Class[] getClasses() {
         return new Class[]{
-                Item.class
+                Item.class, ItemSub.class
         };
     }
 
@@ -45,6 +47,6 @@ public class DBManager extends GeOrmLiteManager {
 
     @Override
     public void onGeUpgrade(SQLiteDatabase database, ConnectionSource connectionSource, int oldVersion, int newVersion) {
-
+        GEL.d("Updating database");
     }
 }
